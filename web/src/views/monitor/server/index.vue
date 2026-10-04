@@ -78,7 +78,7 @@
             </div>
             <div>
               <div class="mb-1 flex items-center justify-between">
-                <span class="text-sm text-g-600">JVM内存</span>
+                <span class="text-sm text-g-600">Go 内存</span>
                 <span class="font-medium text-g-900">
                   {{ server.jvm?.total || '-' }}M
                 </span>
@@ -143,17 +143,17 @@
           <div class="art-card-header">
             <div class="title">
               <ArtSvgIcon
-                icon="ri:java-line"
+                icon="ri:golang-line"
                 class="mr-0.5 align-middle text-xl" />
-              <h4 class="inline-block align-middle">Java虚拟机信息</h4>
+              <h4 class="inline-block align-middle">Go 运行时信息</h4>
             </div>
           </div>
           <div class="mt-4">
             <ElDescriptions :column="2" border>
-              <ElDescriptionsItem label="Java名称">
+              <ElDescriptionsItem label="Go 名称">
                 {{ server.jvm?.name || '-' }}
               </ElDescriptionsItem>
-              <ElDescriptionsItem label="Java版本">
+              <ElDescriptionsItem label="Go 版本">
                 {{ server.jvm?.version || '-' }}
               </ElDescriptionsItem>
               <ElDescriptionsItem label="启动时间">

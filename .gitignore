@@ -33,6 +33,7 @@ web/.env.*.local
 # ==============================
 server/logs/
 server/uploads/
+server/web-dist/  # 前端编译产物，由后端直接托管
 logs/
 uploads/
 

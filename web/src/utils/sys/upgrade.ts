@@ -36,7 +36,7 @@ import { ElNotification } from 'element-plus'
  * @module utils/sys/upgrade
  * @author Art Design Pro Team
  */
-import { upgradeLogList } from '@/mock/upgrade/changeLog'
+import { upgradeLogList } from './changeLog'
 import { useUserStore } from '@/store/modules/user'
 import { StorageConfig } from '@utils/storage/storage-config'
 

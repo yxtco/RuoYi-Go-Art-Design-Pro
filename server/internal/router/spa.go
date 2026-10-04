@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// defaultWebDistDir 未配置 server.web_dist 时的默认前端产物目录
+// defaultWebDistDir 未配置 server.web_dist 时的默认前端产物目录（前端 build 输出到 server/web-dist）
 const defaultWebDistDir = "./web-dist"
 
 // ServeFrontend 让后端直接托管前端编译产物（SPA，无需 Nginx）。

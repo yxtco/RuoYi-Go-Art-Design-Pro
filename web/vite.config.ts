@@ -64,8 +64,7 @@ export default ({ mode }: { mode: string }) => {
     },
     build: {
       target: 'es2015',
-      outDir: 'dist',
-      // 前端编译产物目录改为 assets-web，避免与后端上传静态目录 /assets 冲突
+      outDir: '../server/web-dist', // 前端编译产物直接输出到 server/web-dist，后端启动即可托管
       assetsDir: 'assets-web',
       chunkSizeWarningLimit: 2000,
       minify: 'terser',

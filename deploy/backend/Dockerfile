@@ -42,7 +42,7 @@ WORKDIR /app
 # 后端二进制
 COPY --from=be /out/server /app/server
 # 前端编译产物，由后端静态托管（server.web_dist=/app/web-dist）
-COPY --from=fe /fe/dist /app/web-dist
+COPY --from=fe /server/web-dist /app/web-dist
 # 上传/日志目录
 RUN mkdir -p /app/uploads /app/logs
 EXPOSE 8080

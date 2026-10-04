@@ -13,6 +13,20 @@ import (
 // JWTMiddleware 是一个基于 JWT 的身份验证中间件
 func JWTMiddleware(client *redis.Client, secret string, expireMinute int64) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// 无需认证的路径：前端静态资源 + 登录/验证码等公开接口
+		path := c.Request.URL.Path
+		if path == "/" ||
+			strings.HasPrefix(path, "/assets-web/") ||
+			path == "/favicon.ico" ||
+			path == "/login" ||
+			path == "/captchaImage" ||
+			strings.HasPrefix(path, "/swagger-ui/") ||
+			strings.HasPrefix(path, "/assets/") ||
+			strings.HasPrefix(path, "/system/siteSetting/public") ||
+			path == "/ws/chat" {
+			c.Next()
+			return
+		}
 
 		tokenService := service.Services{}.TokenService.New(c, client, secret, expireMinute)
 

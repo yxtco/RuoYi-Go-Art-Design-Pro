@@ -112,6 +112,7 @@ import { useI18n } from 'vue-i18n'
 import { encrypt } from '@/utils/encrypt'
 import { useSettingStore } from '@/store/modules/setting'
 import { useUserStore } from '@/store/modules/user'
+import { HOME_PAGE_PATH } from '@/router'
 import { HttpError } from '@utils/http/error'
 
 import { fetchLogin, fetchGetCaptcha } from './api'
@@ -267,8 +268,9 @@ const handleSubmit = async () => {
     showLoginSuccessNotice()
 
     // 获取 redirect 参数，如果存在则跳转到指定页面，否则跳转到首页
+    // 注意：不能跳转到 '/'，因为 '/' 不是实际路由路径，依赖守卫重定向会导致首次登录不跳转
     const redirect = route.query.redirect as string
-    router.push(redirect || '/')
+    router.push(redirect || HOME_PAGE_PATH)
   } catch (error) {
     getCode()
     formData.code = ''

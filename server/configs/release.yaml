@@ -2,6 +2,7 @@
 server:
   port: 8080
   host: localhost
+  web_dist: './web-dist' # 前端编译产物目录（前端 build 输出到 server/web-dist，后端直接托管）
 
 # 数据库配置
 database_list:
