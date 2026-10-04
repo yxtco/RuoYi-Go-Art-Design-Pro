@@ -1,43 +1,57 @@
 # ============================================================
-# RuoYi-Go 三容器部署编排：server（后端+前端静态） + mysql + redis
-# 无需 Nginx：后端 Gin 直接托管前端编译产物，同源直连。
+# RuoYi-Go 前后端容器（开发式）部署编排：backend + web，共 2 个容器。
+# MySQL / Redis 不在此编排内 —— 由宿主机提供，后端经 host.docker.internal 连接。
 #
-# 用法（在 deploy 目录下执行）：
-#   docker compose up -d --build
-#   docker compose ps
-#   docker compose logs -f server
+# 设计要点（对应需求）：
+#   1. 后端：golang 官方镜像，容器内直接 `go run main.go`，不预编译二进制
+#   2. 前端：node 官方镜像，容器内直接 `vite --mode docker` 跑开发服务，不预构建
+#   3. 源码绑定挂载（../server、../web → /app），本地改码即时同步进容器
+#   4. 持久化：go 模块/构建缓存、node_modules 用命名卷；uploads/logs 绑定宿主机目录；
+#      MySQL/Redis 数据存宿主机（本就持久）
+#   5. 更新流程：git pull 拉最新代码 → docker compose restart backend web 即生效，无需重建镜像
 #
-# 访问： http://localhost:8080/
-# 说明：
-#   - 首次启动 mysql 容器时，自动执行 server/data/ry_20230706.sql 初始化建表与种子数据
-#   - 后端使用嵌入配置 docker.yaml（-c docker），数据库/Redis 指向同网络服务名
+# 用法（在仓库根目录或 deploy 目录下执行）：
+#   docker compose -f deploy/docker-compose.yml up -d
+#   docker compose -f deploy/docker-compose.yml ps
+#   docker compose -f deploy/docker-compose.yml logs -f backend
+#
+# 访问：
+#   前端 http://<服务器IP>/          （web 容器 vite dev，宿主机 80）
+#   后端 http://<服务器IP>:8080/      （API）
 # ============================================================
 
-name: ruoyi-deploy
+name: ruoyi-dev
 
 services:
-  # ---------- MySQL ----------
-  mysql:
-    image: mysql:8.0
-    container_name: ruoyi-mysql
+  # ---------- 后端：Go 直接 go run ----------
+  backend:
+    image: golang:1.26-alpine
+    container_name: ruoyi-backend
     restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: ruoyi123        # 与 server/configs/docker.yaml 的 database_list.password 一致
-      MYSQL_DATABASE: ry-test
-      TZ: Asia/Shanghai
+    working_dir: /app
     command:
-      - --character-set-server=utf8mb4
-      - --collation-server=utf8mb4_unicode_ci
+      - sh
+      - -c
+      - |
+        set -e
+        cd /app
+        exec go run main.go -c deploy
+    environment:
+      TZ: Asia/Shanghai
+      GOPROXY: https://goproxy.cn,direct   # 国内代理加速模块下载
+      GOMODCACHE: /go/pkg/mod              # 模块缓存（命名卷持久化，重启不重下）
+      GOCACHE: /go/build-cache             # 编译缓存（命名卷持久化，重启快速重编译）
     volumes:
-      - mysql-data:/var/lib/mysql
-      # 首次启动自动初始化数据库（建表 + 种子数据）
-      - ../server/data/ry_20230706.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
+      # 源码绑定挂载：本地改码实时同步
+      - ../server:/app
+      # 依赖缓存持久卷：容器重启/重建不重新下载编译
+      - go-mod:/go/pkg/mod
+      - go-build:/go/build-cache
+    ports:
+      - "8080:8080"
+    extra_hosts:
+      # Linux 下让容器内 host.docker.internal 解析到宿主机（连接宿主机 MySQL/Redis）
+      - "host.docker.internal:host-gateway"
     networks:
       - app-net
     deploy:
@@ -49,68 +63,55 @@ services:
           cpus: "0.25"
           memory: 256M
 
-  # ---------- Redis ----------
-  redis:
-    image: redis:7-alpine
-    container_name: ruoyi-redis
+  # ---------- 前端：Node 直接跑 vite 开发服务 ----------
+  web:
+    image: node:20-alpine
+    container_name: ruoyi-web
     restart: unless-stopped
-    command: ["redis-server", "--appendonly", "yes"]
+    working_dir: /app
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        npm config set registry https://registry.npmmirror.com
+        corepack enable
+        corepack prepare pnpm@10.14.0 --activate
+        cd /app
+        # node_modules 为空（首次/卷被清空）才安装；重启直接复用命名卷，不重装
+        if [ ! -d node_modules ] || [ -z "$(ls -A node_modules)" ]; then
+          pnpm install --frozen-lockfile
+        fi
+        exec pnpm exec vite --mode docker
+    environment:
+      TZ: Asia/Shanghai
+      COREPACK_NPM_REGISTRY: https://registry.npmmirror.com  # corepack 下载 pnpm 也走国内镜像
     volumes:
-      - redis-data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - app-net
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: 256M
-        reservations:
-          cpus: "0.1"
-          memory: 64M
-
-  # ---------- 后端（同时托管前端） ----------
-  server:
-    build:
-      context: ../
-      dockerfile: deploy/backend/Dockerfile
-      args:
-        VITE_API_URL: /
-    image: ruoyi-server:latest
-    container_name: ruoyi-server
-    restart: unless-stopped
-    depends_on:
-      mysql:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      # 源码绑定挂载：本地改码实时同步（vite 热更新）
+      - ../web:/app
+      # node_modules 持久卷：重启不重装依赖
+      - web-node-modules:/app/node_modules
     ports:
-      - "8080:8080"
-    volumes:
-      - uploads-data:/app/uploads
+      - "80:80"
     networks:
       - app-net
     deploy:
       resources:
         limits:
           cpus: "1.0"
-          memory: 512M
+          memory: 1G
         reservations:
           cpus: "0.25"
-          memory: 128M
+          memory: 256M
 
 # 持久化数据卷
 volumes:
-  mysql-data:
-  redis-data:
-  uploads-data:
+  go-mod:          # 后端 Go 模块缓存
+  go-build:        # 后端 Go 编译缓存
+  web-node-modules: # 前端 node_modules 依赖
 
-# 应用内部互通网络
+# 前后端互通网络
 networks:
   app-net:
-    name: app-net
+    name: ruoyi-app-net
     driver: bridge

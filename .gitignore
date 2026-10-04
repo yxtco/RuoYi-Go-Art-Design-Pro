@@ -25,7 +25,6 @@ server/go.work.sum
 # 前端
 # ==============================
 web/node_modules/
-web/dist/
 web/.env.local
 web/.env.*.local
 

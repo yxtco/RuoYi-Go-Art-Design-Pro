@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Art Design Pro</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Art Design Pro - A modern admin dashboard template built with Vue 3, TypeScript, and Element Plus." />
+    <link
+      rel="shortcut icon"
+      type="image/x-icon"
+      href="/assets-web/favicon-C1KazUkF.ico" />
+
+    <style>
+      /* 防止页面刷新时白屏的初始样式 */
+      html {
+        background-color: #fafbfc;
+      }
+
+      html.dark {
+        background-color: #070707;
+      }
+    </style>
+
+    <script>
+      // 初始化 html class 主题属性
+      ;(function () {
+        try {
+          if (typeof Storage === 'undefined' || !window.localStorage) {
+            return
+          }
+
+          const themeType = localStorage.getItem('sys-theme')
+          if (themeType === 'dark') {
+            document.documentElement.classList.add('dark')
+          }
+        } catch (e) {
+          console.warn('Failed to apply initial theme:', e)
+        }
+      })()
+    </script>
+    <script type="module" crossorigin src="/assets-web/index-BB4Ysg2M.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets-web/vue-B4stniNu.js">
+    <link rel="modulepreload" crossorigin href="/assets-web/axios-C14bMLhn.js">
+    <link rel="stylesheet" crossorigin href="/assets-web/index-CBLfXlRt.css">
+  </head>
+
+  <body>
+    <div id="app"></div>
+  </body>
+</html>
