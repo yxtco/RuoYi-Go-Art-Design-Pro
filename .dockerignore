@@ -17,7 +17,6 @@ server/uploads
 
 # 前端依赖与本地构建产物
 web/node_modules
-web/dist
 web/preview
 web/.vite
 
