@@ -1,0 +1,1 @@
+import s from"./FormCanvas-DtJ9mA27.js";import{d as l,c as o,o as a,z as e,T as f}from"./vue-B4stniNu.js";const m={class:"flex h-full min-w-[400px] flex-1 flex-col overflow-hidden"},i={class:"mx-auto h-full w-full flex-1 overflow-y-auto bg-white p-4 shadow-sm"},r=l({__name:"DesignPanel",setup:l=>(l,r)=>(a(),o("div",m,[e("div",i,[f(s)])]))});export{r as _};
