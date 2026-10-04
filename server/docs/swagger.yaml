@@ -1,0 +1,3121 @@
+basePath: /
+definitions:
+  go-fin-server_api_common.LoginRequest:
+    properties:
+      code:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+      uuid:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+info:
+  contact: {}
+  description: 若依 Go 版本接口文档
+  title: RuoYi-Go API
+  version: "1.0"
+paths:
+  /captchaImage:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 验证码图片base64和uuid
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取验证码图片
+      tags:
+      - 登录
+  /common/download:
+    get:
+      parameters:
+      - description: 文件名称
+        in: query
+        name: fileName
+        required: true
+        type: string
+      - description: 下载后是否删除
+        in: query
+        name: delete
+        type: boolean
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: 文件内容
+          schema:
+            type: file
+      security:
+      - BearerAuth: []
+      summary: 通用文件下载
+      tags:
+      - 公共上传
+  /common/download/resource:
+    get:
+      parameters:
+      - description: 资源路径
+        in: query
+        name: resource
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: 文件内容
+          schema:
+            type: file
+      security:
+      - BearerAuth: []
+      summary: 下载资源文件
+      tags:
+      - 公共上传
+  /common/sequence/batch:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 批量生成参数 {businessType, prefix, datePattern, seqLength, resetCycle,
+          count}
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: sequences:序号数组
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 批量生成序号
+      tags:
+      - 序号生成
+  /common/sequence/current:
+    get:
+      parameters:
+      - description: 业务类型
+        in: query
+        name: businessType
+        required: true
+        type: string
+      - description: 序号前缀
+        in: query
+        name: prefix
+        type: string
+      - description: 日期格式
+        in: query
+        name: datePattern
+        type: string
+      - description: 序号位数
+        in: query
+        name: seqLength
+        type: integer
+      - description: 重置周期
+        in: query
+        name: resetCycle
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: currentSequence:当前序号值
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 获取当前序号值
+      tags:
+      - 序号生成
+  /common/sequence/next:
+    get:
+      parameters:
+      - description: 业务类型（如 ORDER, INVOICE）
+        in: query
+        name: businessType
+        required: true
+        type: string
+      - description: 序号前缀（如 ORD, INV）
+        in: query
+        name: prefix
+        type: string
+      - description: 日期格式（如 20060102, 200601, 空串不拼接日期）
+        in: query
+        name: datePattern
+        type: string
+      - description: 序号位数（默认3，如 3 → 001）
+        in: query
+        name: seqLength
+        type: integer
+      - description: '重置周期: daily/monthly/yearly/never（默认 daily）'
+        in: query
+        name: resetCycle
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: sequence:生成的完整序号
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 生成下一个序号
+      tags:
+      - 序号生成
+  /common/sequence/reset:
+    delete:
+      parameters:
+      - description: 业务类型
+        in: query
+        name: businessType
+        required: true
+        type: string
+      - description: 重置周期
+        in: query
+        name: resetCycle
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 重置序号
+      tags:
+      - 序号生成
+  /common/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: 上传文件
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: fileName:文件路径,newFileName:文件名,url:完整URL,originalFilename:原始文件名
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 通用文件上传
+      tags:
+      - 公共上传
+  /common/upload/wangeditor:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: 图片文件
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: url:图片地址,alt:图片名称,href:链接
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: WangEditor图片上传
+      tags:
+      - 公共上传
+  /getInfo:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 用户信息、角色、权限
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 获取用户详细信息
+      tags:
+      - 登录
+  /getRouters:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 菜单树列表
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 获取路由菜单
+      tags:
+      - 登录
+  /login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 登录信息
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/go-fin-server_api_common.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: token
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: 用户登录
+      tags:
+      - 登录
+  /logout:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 退出成功
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 退出登录
+      tags:
+      - 登录
+  /monitor/cache:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 缓存信息
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询缓存详细
+      tags:
+      - 缓存监控
+  /monitor/cache/clearCacheAll:
+    delete:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 清理全部缓存
+      tags:
+      - 缓存监控
+  /monitor/cache/clearCacheKey/{cacheKey}:
+    delete:
+      parameters:
+      - description: 缓存键名
+        in: path
+        name: cacheKey
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 清理指定键名缓存
+      tags:
+      - 缓存监控
+  /monitor/cache/clearCacheName/{cacheName}:
+    delete:
+      parameters:
+      - description: 缓存名称
+        in: path
+        name: cacheName
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 清理指定名称缓存
+      tags:
+      - 缓存监控
+  /monitor/cache/getKeys/{cacheName}:
+    get:
+      parameters:
+      - description: 缓存名称
+        in: path
+        name: cacheName
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 缓存键名列表
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询缓存键名列表
+      tags:
+      - 缓存监控
+  /monitor/cache/getNames:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 缓存名称列表
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询缓存名称列表
+      tags:
+      - 缓存监控
+  /monitor/cache/getValue/{cacheName}/{cacheKey}:
+    get:
+      parameters:
+      - description: 缓存名称
+        in: path
+        name: cacheName
+        required: true
+        type: string
+      - description: 缓存键名
+        in: path
+        name: cacheKey
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 缓存内容
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询缓存内容
+      tags:
+      - 缓存监控
+  /monitor/druid/sqlStats:
+    delete:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 清空 SQL 监控统计数据
+      tags:
+      - SQL监控
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: SQL监控统计
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 获取 SQL 监控统计数据
+      tags:
+      - SQL监控
+  /monitor/job:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 任务信息
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 新增定时任务
+      tags:
+      - 定时任务
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 任务信息
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 修改定时任务
+      tags:
+      - 定时任务
+  /monitor/job/{id}:
+    get:
+      parameters:
+      - description: 任务ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 任务信息
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询定时任务详细
+      tags:
+      - 定时任务
+  /monitor/job/{ids}:
+    delete:
+      parameters:
+      - description: 任务ID，多个用逗号分隔
+        in: path
+        name: ids
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 删除定时任务
+      tags:
+      - 定时任务
+  /monitor/job/changeStatus:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 包含id和status
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 修改任务状态
+      tags:
+      - 定时任务
+  /monitor/job/export:
+    post:
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: Excel文件
+          schema:
+            type: file
+      security:
+      - BearerAuth: []
+      summary: 导出定时任务数据
+      tags:
+      - 定时任务
+  /monitor/job/list:
+    get:
+      parameters:
+      - description: 任务名称
+        in: query
+        name: jobName
+        type: string
+      - description: 任务组名
+        in: query
+        name: jobGroup
+        type: string
+      - description: 状态
+        in: query
+        name: status
+        type: string
+      - description: 页码
+        in: query
+        name: pageNum
+        type: integer
+      - description: 每页数量
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 任务列表
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询定时任务列表
+      tags:
+      - 定时任务
+  /monitor/job/run:
+    put:
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: 立即执行一次任务
+      tags:
+      - 定时任务
+  /monitor/jobLog/{id}:
+    get:
+      parameters:
+      - description: 日志ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 日志信息
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询调度日志详细
+      tags:
+      - 调度日志
+  /monitor/jobLog/{ids}:
+    delete:
+      parameters:
+      - description: 日志ID，多个用逗号分隔
+        in: path
+        name: ids
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 删除调度日志
+      tags:
+      - 调度日志
+  /monitor/jobLog/clean:
+    delete:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 清空调度日志
+      tags:
+      - 调度日志
+  /monitor/jobLog/export:
+    post:
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: Excel文件
+          schema:
+            type: file
+      security:
+      - BearerAuth: []
+      summary: 导出调度日志
+      tags:
+      - 调度日志
+  /monitor/jobLog/list:
+    get:
+      parameters:
+      - description: 任务名称
+        in: query
+        name: jobName
+        type: string
+      - description: 任务组名
+        in: query
+        name: jobGroup
+        type: string
+      - description: 状态
+        in: query
+        name: status
+        type: string
+      - description: 页码
+        in: query
+        name: pageNum
+        type: integer
+      - description: 每页数量
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 调度日志列表
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询调度日志列表
+      tags:
+      - 调度日志
+  /monitor/logininfor/{ids}:
+    delete:
+      parameters:
+      - description: 日志ID，多个用逗号分隔
+        in: path
+        name: ids
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 删除登录日志
+      tags:
+      - 登录日志
+  /monitor/logininfor/clean:
+    delete:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 清空登录日志
+      tags:
+      - 登录日志
+  /monitor/logininfor/export:
+    post:
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: Excel文件
+          schema:
+            type: file
+      security:
+      - BearerAuth: []
+      summary: 导出登录日志
+      tags:
+      - 登录日志
+  /monitor/logininfor/list:
+    get:
+      parameters:
+      - description: IP地址
+        in: query
+        name: ipaddr
+        type: string
+      - description: 用户名称
+        in: query
+        name: userName
+        type: string
+      - description: 状态
+        in: query
+        name: status
+        type: integer
+      - description: 页码
+        in: query
+        name: pageNum
+        type: integer
+      - description: 每页数量
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 登录日志列表
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询登录日志列表
+      tags:
+      - 登录日志
+  /monitor/logininfor/unlock/{userName}:
+    get:
+      parameters:
+      - description: 用户名
+        in: path
+        name: userName
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 解锁用户登录状态
+      tags:
+      - 登录日志
+  /monitor/online/{tokenId}:
+    delete:
+      parameters:
+      - description: 令牌ID
+        in: path
+        name: tokenId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 强退用户
+      tags:
+      - 在线用户
+  /monitor/online/list:
+    get:
+      parameters:
+      - description: IP地址
+        in: query
+        name: ipaddr
+        type: string
+      - description: 用户名称
+        in: query
+        name: userName
+        type: string
+      - description: 页码
+        in: query
+        name: pageNum
+        type: integer
+      - description: 每页数量
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 在线用户列表
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询在线用户列表
+      tags:
+      - 在线用户
+  /monitor/operLog/{ids}:
+    delete:
+      parameters:
+      - description: 日志ID，多个用逗号分隔
+        in: path
+        name: ids
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 删除操作日志
+      tags:
+      - 操作日志
+  /monitor/operLog/clean:
+    delete:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 清空操作日志
+      tags:
+      - 操作日志
+  /monitor/operLog/export:
+    post:
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: Excel文件
+          schema:
+            type: file
+      security:
+      - BearerAuth: []
+      summary: 导出操作日志
+      tags:
+      - 操作日志
+  /monitor/operLog/list:
+    get:
+      parameters:
+      - description: 系统模块
+        in: query
+        name: title
+        type: string
+      - description: 操作人员
+        in: query
+        name: operName
+        type: string
+      - description: 操作类型
+        in: query
+        name: businessType
+        type: integer
+      - description: 状态
+        in: query
+        name: status
+        type: integer
+      - description: 页码
+        in: query
+        name: pageNum
+        type: integer
+      - description: 每页数量
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作日志列表
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询操作日志列表
+      tags:
+      - 操作日志
+  /monitor/server:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 服务器信息
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 获取服务器信息（CPU、内存、磁盘、运行时）
+      tags:
+      - 服务监控
+  /register:
+    post:
+      responses: {}
+      summary: 用户注册
+      tags:
+      - 登录
+  /system/config:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 参数信息
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 新增参数配置
+      tags:
+      - 参数管理
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 参数信息
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 修改参数配置
+      tags:
+      - 参数管理
+  /system/config/{id}:
+    get:
+      parameters:
+      - description: 参数ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 参数信息
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询参数详细
+      tags:
+      - 参数管理
+  /system/config/{ids}:
+    delete:
+      parameters:
+      - description: 参数ID，多个用逗号分隔
+        in: path
+        name: ids
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 删除参数配置
+      tags:
+      - 参数管理
+  /system/config/configKey/{configKey}:
+    get:
+      parameters:
+      - description: 参数键名
+        in: path
+        name: configKey
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 参数值
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 根据参数键名查询参数值
+      tags:
+      - 参数管理
+  /system/config/export:
+    post:
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: Excel文件
+          schema:
+            type: file
+      security:
+      - BearerAuth: []
+      summary: 导出参数数据
+      tags:
+      - 参数管理
+  /system/config/list:
+    get:
+      parameters:
+      - description: 参数名称
+        in: query
+        name: configName
+        type: string
+      - description: 参数键名
+        in: query
+        name: configKey
+        type: string
+      - description: 系统内置
+        in: query
+        name: configType
+        type: string
+      - description: 页码
+        in: query
+        name: pageNum
+        type: integer
+      - description: 每页数量
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 参数列表
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询参数列表
+      tags:
+      - 参数管理
+  /system/config/refreshCache:
+    delete:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 刷新参数缓存
+      tags:
+      - 参数管理
+  /system/dept:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 部门信息
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 新增部门
+      tags:
+      - 部门管理
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 部门信息
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 修改部门
+      tags:
+      - 部门管理
+  /system/dept/{id}:
+    delete:
+      parameters:
+      - description: 部门ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 删除部门
+      tags:
+      - 部门管理
+    get:
+      parameters:
+      - description: 部门ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 部门信息
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询部门详细
+      tags:
+      - 部门管理
+  /system/dept/list:
+    get:
+      parameters:
+      - description: 部门名称
+        in: query
+        name: deptName
+        type: string
+      - description: 状态
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 部门列表
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询部门列表
+      tags:
+      - 部门管理
+  /system/dept/list/exclude/{id}:
+    get:
+      parameters:
+      - description: 部门ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 部门列表
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询部门列表（排除子节点）
+      tags:
+      - 部门管理
+  /system/dept/updateSort:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 包含deptIds和orderNums
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 部门排序调整
+      tags:
+      - 部门管理
+  /system/dict/data:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 字典数据信息
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 新增字典数据
+      tags:
+      - 字典数据
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 字典数据信息
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 修改字典数据
+      tags:
+      - 字典数据
+  /system/dict/data/{id}:
+    get:
+      parameters:
+      - description: 字典数据ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 字典数据信息
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询字典数据详细
+      tags:
+      - 字典数据
+  /system/dict/data/{ids}:
+    delete:
+      parameters:
+      - description: 字典数据ID，多个用逗号分隔
+        in: path
+        name: ids
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 删除字典数据
+      tags:
+      - 字典数据
+  /system/dict/data/export:
+    post:
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: Excel文件
+          schema:
+            type: file
+      security:
+      - BearerAuth: []
+      summary: 导出字典数据
+      tags:
+      - 字典数据
+  /system/dict/data/list:
+    get:
+      parameters:
+      - description: 字典类型
+        in: query
+        name: dictType
+        type: string
+      - description: 字典标签
+        in: query
+        name: dictLabel
+        type: string
+      - description: 状态
+        in: query
+        name: status
+        type: string
+      - description: 页码
+        in: query
+        name: pageNum
+        type: integer
+      - description: 每页数量
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 字典数据列表
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询字典数据列表
+      tags:
+      - 字典数据
+  /system/dict/data/types:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 字典类型列表
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            type: string
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 字典数据
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 根据字典类型查询字典数据信息
+      tags:
+      - 字典数据
+  /system/dict/type:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 字典类型信息
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 新增字典类型
+      tags:
+      - 字典类型
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 字典类型信息
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 修改字典类型
+      tags:
+      - 字典类型
+  /system/dict/type/{id}:
+    get:
+      parameters:
+      - description: 字典类型ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 字典类型信息
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询字典类型详细
+      tags:
+      - 字典类型
+  /system/dict/type/{ids}:
+    delete:
+      parameters:
+      - description: 字典类型ID，多个用逗号分隔
+        in: path
+        name: ids
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 删除字典类型
+      tags:
+      - 字典类型
+  /system/dict/type/export:
+    post:
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: Excel文件
+          schema:
+            type: file
+      security:
+      - BearerAuth: []
+      summary: 导出字典类型数据
+      tags:
+      - 字典类型
+  /system/dict/type/list:
+    get:
+      parameters:
+      - description: 字典名称
+        in: query
+        name: dictName
+        type: string
+      - description: 字典类型
+        in: query
+        name: dictType
+        type: string
+      - description: 状态
+        in: query
+        name: status
+        type: string
+      - description: 页码
+        in: query
+        name: pageNum
+        type: integer
+      - description: 每页数量
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 字典类型列表
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询字典类型列表
+      tags:
+      - 字典类型
+  /system/dict/type/optionSelect:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 字典类型列表
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 获取字典选择框列表
+      tags:
+      - 字典类型
+  /system/dict/type/refreshCache:
+    delete:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 刷新字典缓存
+      tags:
+      - 字典类型
+  /system/menu:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 菜单信息
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 新增菜单
+      tags:
+      - 菜单管理
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 菜单信息
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 修改菜单
+      tags:
+      - 菜单管理
+  /system/menu/{id}:
+    delete:
+      parameters:
+      - description: 菜单ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 删除菜单
+      tags:
+      - 菜单管理
+    get:
+      parameters:
+      - description: 菜单ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 菜单信息
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询菜单详细
+      tags:
+      - 菜单管理
+  /system/menu/list:
+    get:
+      parameters:
+      - description: 菜单名称
+        in: query
+        name: menuName
+        type: string
+      - description: 状态
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 菜单列表
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询菜单列表
+      tags:
+      - 菜单管理
+  /system/menu/roleMenuTreeselect/{roleId}:
+    get:
+      parameters:
+      - description: 角色ID
+        in: path
+        name: roleId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 菜单树和已勾选的菜单ID
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 根据角色ID查询菜单下拉树结构
+      tags:
+      - 菜单管理
+  /system/menu/treeselect:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 菜单树
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询菜单下拉树结构
+      tags:
+      - 菜单管理
+  /system/menu/updateSort:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 包含menuIds和orderNums
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 菜单排序调整
+      tags:
+      - 菜单管理
+  /system/notice:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 公告信息
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 新增公告
+      tags:
+      - 公告管理
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 公告信息
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 修改公告
+      tags:
+      - 公告管理
+  /system/notice/{id}:
+    get:
+      parameters:
+      - description: 公告ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 公告信息
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询公告详细
+      tags:
+      - 公告管理
+  /system/notice/{ids}:
+    delete:
+      parameters:
+      - description: 公告ID，多个用逗号分隔
+        in: path
+        name: ids
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 删除公告
+      tags:
+      - 公告管理
+  /system/notice/list:
+    get:
+      parameters:
+      - description: 公告标题
+        in: query
+        name: noticeTitle
+        type: string
+      - description: 创建者
+        in: query
+        name: createBy
+        type: string
+      - description: 公告类型
+        in: query
+        name: noticeType
+        type: string
+      - description: 页码
+        in: query
+        name: pageNum
+        type: integer
+      - description: 每页数量
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 公告列表
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询公告列表
+      tags:
+      - 公告管理
+  /system/notice/readUsers/list:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 已读用户列表
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询公告已读用户列表
+      tags:
+      - 公告管理
+  /system/post:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 岗位信息
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 新增岗位
+      tags:
+      - 岗位管理
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 岗位信息
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 修改岗位
+      tags:
+      - 岗位管理
+  /system/post/{id}:
+    get:
+      parameters:
+      - description: 岗位ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 岗位信息
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询岗位详细
+      tags:
+      - 岗位管理
+  /system/post/{ids}:
+    delete:
+      parameters:
+      - description: 岗位ID，多个用逗号分隔
+        in: path
+        name: ids
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 删除岗位
+      tags:
+      - 岗位管理
+  /system/post/export:
+    post:
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: Excel文件
+          schema:
+            type: file
+      security:
+      - BearerAuth: []
+      summary: 导出岗位数据
+      tags:
+      - 岗位管理
+  /system/post/list:
+    get:
+      parameters:
+      - description: 岗位编码
+        in: query
+        name: postCode
+        type: string
+      - description: 岗位名称
+        in: query
+        name: postName
+        type: string
+      - description: 状态
+        in: query
+        name: status
+        type: string
+      - description: 页码
+        in: query
+        name: pageNum
+        type: integer
+      - description: 每页数量
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 岗位列表
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询岗位列表
+      tags:
+      - 岗位管理
+  /system/role:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 角色信息
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 新增角色
+      tags:
+      - 角色管理
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 角色信息
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 修改角色
+      tags:
+      - 角色管理
+  /system/role/{id}:
+    get:
+      parameters:
+      - description: 角色ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 角色信息
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询角色详细
+      tags:
+      - 角色管理
+  /system/role/{ids}:
+    delete:
+      parameters:
+      - description: 角色ID，多个用逗号分隔
+        in: path
+        name: ids
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 删除角色
+      tags:
+      - 角色管理
+  /system/role/authUser/allocatedList:
+    get:
+      parameters:
+      - description: 角色ID
+        in: query
+        name: roleId
+        required: true
+        type: integer
+      - description: 用户名称
+        in: query
+        name: userName
+        type: string
+      - description: 手机号码
+        in: query
+        name: phonenumber
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 用户列表
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询角色已授权用户列表
+      tags:
+      - 角色管理
+  /system/role/authUser/cancel:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 包含roleId和userId
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 取消用户授权角色
+      tags:
+      - 角色管理
+  /system/role/authUser/cancelAll:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 包含roleId和userIds
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 批量取消用户授权角色
+      tags:
+      - 角色管理
+  /system/role/authUser/selectAll:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 包含roleId和userIds
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 授权用户选择
+      tags:
+      - 角色管理
+  /system/role/authUser/unallocatedList:
+    get:
+      parameters:
+      - description: 角色ID
+        in: query
+        name: roleId
+        required: true
+        type: integer
+      - description: 用户名称
+        in: query
+        name: userName
+        type: string
+      - description: 手机号码
+        in: query
+        name: phonenumber
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 用户列表
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询角色未授权用户列表
+      tags:
+      - 角色管理
+  /system/role/changeStatus:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 包含id和status
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 角色状态修改
+      tags:
+      - 角色管理
+  /system/role/dataScope:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 数据权限信息
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 角色数据权限
+      tags:
+      - 角色管理
+  /system/role/deptTree/{id}:
+    get:
+      parameters:
+      - description: 角色ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 部门树
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 根据角色ID查询部门树结构
+      tags:
+      - 角色管理
+  /system/role/export:
+    post:
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: Excel文件
+          schema:
+            type: file
+      security:
+      - BearerAuth: []
+      summary: 导出角色数据
+      tags:
+      - 角色管理
+  /system/role/list:
+    get:
+      parameters:
+      - description: 角色名称
+        in: query
+        name: roleName
+        type: string
+      - description: 权限字符
+        in: query
+        name: roleKey
+        type: string
+      - description: 状态
+        in: query
+        name: status
+        type: string
+      - description: 页码
+        in: query
+        name: pageNum
+        type: integer
+      - description: 每页数量
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 角色列表
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询角色列表
+      tags:
+      - 角色管理
+  /system/user:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 用户信息
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 新增用户
+      tags:
+      - 用户管理
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 用户信息
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 修改用户
+      tags:
+      - 用户管理
+  /system/user/{id}:
+    get:
+      parameters:
+      - description: 用户ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 用户详细信息
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询用户详细信息
+      tags:
+      - 用户管理
+  /system/user/{ids}:
+    delete:
+      parameters:
+      - description: 用户ID，多个用逗号分隔
+        in: path
+        name: ids
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 删除用户
+      tags:
+      - 用户管理
+  /system/user/authRole:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 用户ID
+        in: body
+        name: id
+        required: true
+        schema:
+          type: integer
+      - description: 角色ID列表
+        in: body
+        name: roleIds
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 保存授权角色
+      tags:
+      - 用户管理
+  /system/user/authRole/{id}:
+    get:
+      parameters:
+      - description: 用户ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 角色列表
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询用户授权角色
+      tags:
+      - 用户管理
+  /system/user/changeStatus:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 包含id和status
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 修改用户状态
+      tags:
+      - 用户管理
+  /system/user/deptTree:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 部门树
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询部门下拉树结构
+      tags:
+      - 用户管理
+  /system/user/export:
+    post:
+      parameters:
+      - description: 用户名称
+        in: query
+        name: userName
+        type: string
+      - description: 手机号码
+        in: query
+        name: phonenumber
+        type: string
+      - description: 状态
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: Excel文件
+          schema:
+            type: file
+      security:
+      - BearerAuth: []
+      summary: 导出用户数据
+      tags:
+      - 用户管理
+  /system/user/importData:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: Excel文件
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 导入结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 导入用户数据
+      tags:
+      - 用户管理
+  /system/user/importTemplate:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 模板数据
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 下载导入模板
+      tags:
+      - 用户管理
+  /system/user/list:
+    get:
+      parameters:
+      - description: 用户名称
+        in: query
+        name: userName
+        type: string
+      - description: 手机号码
+        in: query
+        name: phonenumber
+        type: string
+      - description: 状态
+        in: query
+        name: status
+        type: string
+      - description: 部门ID
+        in: query
+        name: deptId
+        type: string
+      - description: 开始时间
+        in: query
+        name: beginTime
+        type: string
+      - description: 结束时间
+        in: query
+        name: endTime
+        type: string
+      - description: 页码
+        in: query
+        name: pageNum
+        type: integer
+      - description: 每页数量
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 用户列表
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询用户列表
+      tags:
+      - 用户管理
+  /system/user/profile:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 个人信息
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询用户个人信息
+      tags:
+      - 用户管理
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 个人信息
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 修改用户个人信息
+      tags:
+      - 用户管理
+  /system/user/profile/avatar:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: 头像文件
+        in: formData
+        name: avatarfile
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 头像URL
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 用户头像上传
+      tags:
+      - 用户管理
+  /system/user/profile/updatePwd:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 包含oldPassword和newPassword
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 修改用户密码
+      tags:
+      - 用户管理
+  /system/user/resetPwd:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 包含id和password
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 重置用户密码
+      tags:
+      - 用户管理
+  /tool/gen:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 表信息
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 修改代码生成信息
+      tags:
+      - 代码生成
+  /tool/gen/{id}:
+    delete:
+      parameters:
+      - description: 表ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 删除表
+      tags:
+      - 代码生成
+    get:
+      parameters:
+      - description: 表ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 表信息
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询表详细信息
+      tags:
+      - 代码生成
+  /tool/gen/createTable:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 表信息
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 创建表
+      tags:
+      - 代码生成
+  /tool/gen/db/list:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 数据库表列表
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询数据库列表
+      tags:
+      - 代码生成
+  /tool/gen/genCode/{tableName}:
+    get:
+      parameters:
+      - description: 表名称
+        in: path
+        name: tableName
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 生成结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 生成代码
+      tags:
+      - 代码生成
+  /tool/gen/importTable:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 导入表
+      tags:
+      - 代码生成
+  /tool/gen/list:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 表数据列表
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 查询表数据
+      tags:
+      - 代码生成
+  /tool/gen/preview/{id}:
+    get:
+      parameters:
+      - description: 表ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 代码预览
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 预览代码
+      tags:
+      - 代码生成
+  /tool/gen/synchDb/{tableName}:
+    get:
+      parameters:
+      - description: 表名称
+        in: path
+        name: tableName
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 同步结果
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 同步数据库
+      tags:
+      - 代码生成
+securityDefinitions:
+  BearerAuth:
+    description: Bearer {token}
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

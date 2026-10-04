@@ -1,0 +1,48 @@
+# ==============================
+# IDE / 编辑器
+# ==============================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ==============================
+# Go 后端
+# ==============================
+server/*.exe
+server/*.exe~
+server/*.dll
+server/*.so
+server/*.dylib
+server/*.test
+server/*.out
+server/go.work
+server/go.work.sum
+
+# ==============================
+# 前端
+# ==============================
+web/node_modules/
+web/dist/
+web/.env.local
+web/.env.*.local
+
+# ==============================
+# 运行时生成
+# ==============================
+server/logs/
+server/uploads/
+logs/
+uploads/
+
+# ==============================
+# 开发/本地产物
+# ==============================
+# 数据库导出工具（本地维护用，不纳入版本库）
+server/cmd/dbexport/
+
+# 单元测试文件（本地验证用，不纳入版本库）
+server/internal/config/config_test.go
+server/internal/initdb/initdb_test.go

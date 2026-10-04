@@ -1,0 +1,116 @@
+# ============================================================
+# RuoYi-Go 三容器部署编排：server（后端+前端静态） + mysql + redis
+# 无需 Nginx：后端 Gin 直接托管前端编译产物，同源直连。
+#
+# 用法（在 deploy 目录下执行）：
+#   docker compose up -d --build
+#   docker compose ps
+#   docker compose logs -f server
+#
+# 访问： http://localhost:8080/
+# 说明：
+#   - 首次启动 mysql 容器时，自动执行 server/data/ry_20230706.sql 初始化建表与种子数据
+#   - 后端使用嵌入配置 docker.yaml（-c docker），数据库/Redis 指向同网络服务名
+# ============================================================
+
+name: ruoyi-deploy
+
+services:
+  # ---------- MySQL ----------
+  mysql:
+    image: mysql:8.0
+    container_name: ruoyi-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ruoyi123        # 与 server/configs/docker.yaml 的 database_list.password 一致
+      MYSQL_DATABASE: ry-test
+      TZ: Asia/Shanghai
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # 首次启动自动初始化数据库（建表 + 种子数据）
+      - ../server/data/ry_20230706.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - app-net
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+
+  # ---------- Redis ----------
+  redis:
+    image: redis:7-alpine
+    container_name: ruoyi-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-net
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          cpus: "0.1"
+          memory: 64M
+
+  # ---------- 后端（同时托管前端） ----------
+  server:
+    build:
+      context: ../
+      dockerfile: deploy/backend/Dockerfile
+      args:
+        VITE_API_URL: /
+    image: ruoyi-server:latest
+    container_name: ruoyi-server
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    volumes:
+      - uploads-data:/app/uploads
+    networks:
+      - app-net
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+
+# 持久化数据卷
+volumes:
+  mysql-data:
+  redis-data:
+  uploads-data:
+
+# 应用内部互通网络
+networks:
+  app-net:
+    name: app-net
+    driver: bridge

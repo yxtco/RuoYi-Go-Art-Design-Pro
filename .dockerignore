@@ -1,0 +1,26 @@
+# ============================================================
+# Docker 构建上下文忽略清单（context 为仓库根目录）
+# 减小构建上下文体积、避免把本地产物/依赖/二进制带入镜像
+# ============================================================
+
+# 版本控制与 IDE
+.git
+.gitignore
+.idea
+.DS_Store
+
+# 后端（前端 Dockerfile 无需后端源码）
+server/server
+server/data
+server/logs
+server/uploads
+
+# 前端依赖与本地构建产物
+web/node_modules
+web/dist
+web/preview
+web/.vite
+
+# 日志
+**/logs
+**/*.log

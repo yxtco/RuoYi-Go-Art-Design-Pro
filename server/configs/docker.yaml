@@ -1,0 +1,87 @@
+# ============================================================
+# Docker 部署专用配置（嵌入二进制，容器内通过 -c docker 加载）
+# 数据库/Redis 指向同网络的 mysql/redis 容器服务名
+# ============================================================
+
+# 服务器配置
+server:
+  port: 8080
+  host: localhost
+  web_dist: '/app/web-dist'   # 前端编译产物目录（后端直接托管）
+
+# 数据库配置（容器内服务名 mysql）
+database_list:
+  - name: master            # 数据库连接名称
+    driver: mysql           # 数据库驱动类型，支持 mysql、postgres
+    host: mysql             # 数据库主机地址
+    port: 3306              # 数据库端口
+    username: root          # 数据库用户名
+    password: 'ruoyi123'    # 数据库密码（与 docker-compose 中 MYSQL_ROOT_PASSWORD 一致）
+    database: ry-test       # 数据库名称
+    logLevel: 1             # 日志级别：1=Silent 2=Error 3=Warn 4=Info
+
+# 日志配置
+log:
+  level: info            # 日志级别：debug, info, warn, error
+  format: json           # 日志格式：text, json
+  dir: /app/logs         # 日志文件存储目录
+  max_size: 20           # 单个日志文件最大大小(MB)
+  max_backups: 5         # 保留的旧日志文件数量
+  max_age: 7             # 保留旧日志文件的最大天数
+  compress: true         # 是否压缩旧日志文件
+
+# 缓存配置（容器内服务名 redis）
+redis_list:
+  - name: master
+    addr: 'redis:6379'
+    password: ''
+    db: 0
+
+# rsa 密钥
+rsa:
+  public_key: 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1gSEu/3HAVyof9+SAhBa
+    T3qKoRAqrofLzgU4hiDxMDKi9zxF7shCMaQE1a62zdDMHJna3I9N6uqZeENtVRoE
+    lJvbOEvCmtRU1GYV51AztmCBFOrpP4Qlg2o9l2eZ1D9C4k/MjFfulg+AF6DYVKjA
+    xvX+da2iImrVhs8h453MTcFIL/OU9LBQPt81Ii7ynqKsjFIKHuZhQ6e7y+q25UKS
+    h/dg41rsUrbsSVmndg5cHfBVIsMJVQg5/dt5td82E4NurZe1iMWsBYYHG5b152AV
+    dD5j0xa08qXx5H3p/777Klp2vNhEl+b2mK0rJTdf4GAOdfRaoQIGL/mlqGZ+Vndl
+    hwIDAQAB'
+
+  private_key: 'MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDWBIS7/ccBXKh/
+    35ICEFpPeoqhECquh8vOBTiGIPEwMqL3PEXuyEIxpATVrrbN0Mwcmdrcj03q6pl4
+    Q21VGgSUm9s4S8Ka1FTUZhXnUDO2YIEU6uk/hCWDaj2XZ5nUP0LiT8yMV+6WD4AX
+    oNhUqMDG9f51raIiatWGzyHjncxNwUgv85T0sFA+3zUiLvKeoqyMUgoe5mFDp7vL
+    6rblQpKH92DjWuxStuxJWad2Dlwd8FUiwwlVCDn923m13zYTg26tl7WIxawFhgcb
+    lvXnYBV0PmPTFrTypfHkfen/vvsqWna82ESX5vaYrSslN1/gYA519FqhAgYv+aWo
+    Zn5Wd2WHAgMBAAECggEATgX6sCCObyAtK+VBcTAuBIC7zok6zkMimXrMxxV2aKhl
+    QjY+lpV6kGdn/dECwxkGeLzcjgFOmkCp767BSr/AAL+rVaRFD7YuMPsArEJQgAJB
+    vPMBUw8lr/nI94wlCDyB8Ui/XUDncdy3yaVxiLe3BDIFcTh6fgqtysZz5+wM4iFU
+    Wdx5rZ0kTzeTQKaDoFR/UzM20fP7t7TjHxf0wL+MqYtirx/QSPVMe5ZV7geY4auX
+    y45x2rD/nYE2YmP2kdrS9R237oNpsmDamCbkknPl42tHHeO6T0Km3pg6gpQt2Hwo
+    ijDY/xeMgY5fsS2R/9EzolqGU8w7/Ny2CXxen03EZQKBgQD6CDkW28aIcSYZueOP
+    0mo8keit7VWZRUdRJW5MeZ2iDT1kd8CIQbcLwzWCkyscZISoFjksMemr8wIWqSXr
+    QeCEoMsPShKbKT5C3KZKVDmRD08ON+YjgNdqGoYE4rm3JMm6gI3FpfgO+FhuGynI
+    W1Ejva+GN+6oXCXXDZK6iy7WCwKBgQDbIDxGAU+MlHA57PoCrv1SrqMXKwFDC0wh
+    V0FwQf5Am6Q0vehjo+hF9fz0fVbW8Vn1q9zqAmdaMbEQQEYOeHQ85BpulGx8dDay
+    zAaJU7mwqJMjxUHTy5MYRgLKaL0xwcCTc6ekSqksOG1IdpWc0cHLFC1xa2vnb04/
+    +XiF4gbH9QKBgQDT7yps/MdxGe/AuLdyTlnsk4UWAGmhLH8CAmdW/XMnTG+wfG0/
+    UeyVVNdDoflV7MIhNA0sL/aw4J/xk1jn7AQih6T3hcL1sGTtCdkOggv1sHNDSxCR
+    IYH2lxrog0IGQnGX26XQVhlInytd0Tp+cSD62asxarGqFcmhWwj3hEij9wKBgQCA
+    A6oSv8tIdqPFw4MftDl8Z1gSPeaD04LLa51oRrWR6xuYUGYGaAhXbukzsFHeSqvi
+    kWADOhpFIAiwVMxYwdguhphGh+GFJ6OY+wbKjaZK5YDogeH+KM0rfiM9Oslk2yt1
+    OTj0C0Yf9mspzVWEgypzSLtvqnEkiOsvBsB5ft21TQKBgQC7/fKmT2gQ7TcRhREE
+    Y5u3pq2k3P2AubYP9ing7HAMYZ2NYPZtPclj6m35l3dbuKCEIMqXn9xwgnKIYwwI
+    vexaInJFNgFig9FsfZ2Bqjo5Mc/ht8uOIVYNVpmOoXrUL6d7wHOrp5tKjPbLS0x/
+    iM0PZMhZ9jyUJHabMhL7P7m0tg=='
+
+# 文件上传配置
+upload:
+  base_path: '/app/uploads' # 文件上传基础存储路径
+  max_size: 50              # 最大上传文件大小(MB)
+
+# jwt
+jwt:
+  secret: '88d9#0b69}eaE2Bc18'
+  expiration_time: 100 # 分钟
+
+is_address_enabled: true
