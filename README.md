@@ -5,14 +5,14 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/chen496817468/ruoyi-go-art-design-pro" target="_blank">GitHub</a> ·
+  <a href="https://github.com/yxtco/RuoYi-Go-Art-Design-Pro" target="_blank">GitHub</a> ·
   <a href="#快速开始">快速开始</a> ·
   <a href="#功能模块">功能模块</a> ·
   <a href="#致谢">致谢</a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/chen496817468/ruoyi-go-art-design-pro">
+  <a href="https://github.com/yxtco/RuoYi-Go-Art-Design-Pro">
     <img src="https://img.shields.io/badge/GitHub-ruoyi--go--art--design--pro-181717?logo=github" alt="GitHub" />
   </a>
   <img src="https://img.shields.io/badge/Go-1.26-00ADD8?logo=go" alt="Go" />
@@ -224,7 +224,7 @@ ruoyi-go-art-design-pro/
 
 ```bash
 # 克隆项目
-git clone https://github.com/chen496817468/ruoyi-go-art-design-pro.git
+git clone https://github.com/yxtco/RuoYi-Go-Art-Design-Pro.git
 cd ruoyi-go-art-design-pro
 
 # 进入后端目录
