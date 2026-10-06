@@ -26,6 +26,8 @@ export const useSiteStore = defineStore('site', {
     captchaEnabled: 'true',
     registerUser: 'false',
     blackIPList: '',
+    logLevel: 'standard',
+    logFormat: 'json',
     loaded: false
   }),
   actions: {
@@ -54,6 +56,8 @@ export const useSiteStore = defineStore('site', {
       if (data.captchaEnabled !== undefined) this.captchaEnabled = data.captchaEnabled
       if (data.registerUser !== undefined) this.registerUser = data.registerUser
       if (data.blackIPList !== undefined) this.blackIPList = data.blackIPList
+      if (data.logLevel !== undefined) this.logLevel = data.logLevel
+      if (data.logFormat !== undefined) this.logFormat = data.logFormat
       this.loaded = true
     },
     /** 保存网站设置（管理页） */

@@ -111,6 +111,56 @@
             </el-form-item>
           </el-form>
         </el-tab-pane>
+
+        <!-- 日志设置 -->
+        <el-tab-pane label="日志设置" name="log">
+          <el-form :model="form" label-width="110px" label-position="right">
+            <el-form-item label="日志级别">
+              <el-radio-group v-model="form.logLevel">
+                <el-radio-button value="quiet">
+                  <div class="flex-c flex-col items-center">
+                    <span>安静</span>
+                    <span class="text-xs text-g-500">仅错误</span>
+                  </div>
+                </el-radio-button>
+                <el-radio-button value="standard">
+                  <div class="flex-c flex-col items-center">
+                    <span>标准</span>
+                    <span class="text-xs text-g-500">常规信息</span>
+                  </div>
+                </el-radio-button>
+                <el-radio-button value="detailed">
+                  <div class="flex-c flex-col items-center">
+                    <span>详细</span>
+                    <span class="text-xs text-g-500">调试模式</span>
+                  </div>
+                </el-radio-button>
+              </el-radio-group>
+              <div class="mt-2 text-g-600 text-xs">
+                <template v-if="form.logLevel === 'quiet'">安静模式：仅输出 ERROR 及以上级别日志，适合生产环境</template>
+                <template v-else-if="form.logLevel === 'standard'">标准模式：输出 INFO/WARN/ERROR 日志，适合日常运行</template>
+                <template v-else>详细模式：输出 DEBUG 及以上全部日志，适合排查问题</template>
+              </div>
+            </el-form-item>
+
+            <el-form-item label="日志格式">
+              <el-radio-group v-model="form.logFormat">
+                <el-radio-button value="json">JSON</el-radio-button>
+                <el-radio-button value="console">控制台文本</el-radio-button>
+              </el-radio-group>
+              <div class="mt-2 text-g-600 text-xs">
+                <template v-if="form.logFormat === 'json'">JSON 格式：结构化输出，便于日志采集与分析</template>
+                <template v-else>控制台文本：可读性强，便于开发调试</template>
+              </div>
+            </el-form-item>
+
+            <el-alert
+              title="日志级别调整后即时生效，无需重启服务。日志格式变更需重启服务后生效。"
+              type="info"
+              :closable="false"
+              show-icon />
+          </el-form>
+        </el-tab-pane>
       </el-tabs>
     </el-card>
 
@@ -149,7 +199,9 @@ const form = reactive<SiteSetting>({
   loginCopyright: '',
   captchaEnabled: 'true',
   registerUser: 'false',
-  blackIPList: ''
+  blackIPList: '',
+  logLevel: 'standard',
+  logFormat: 'json'
 })
 
 // 开关绑定（form 存字符串 "true"/"false"，switch 需要布尔）
@@ -177,7 +229,9 @@ async function load() {
         loginCopyright: siteStore.loginCopyright,
         captchaEnabled: siteStore.captchaEnabled,
         registerUser: siteStore.registerUser,
-        blackIPList: siteStore.blackIPList
+        blackIPList: siteStore.blackIPList,
+        logLevel: siteStore.logLevel,
+        logFormat: siteStore.logFormat
       })
     }
   } catch {

@@ -34,6 +34,8 @@ var siteSettingKeys = []struct{ Key, Name string }{
 	{"sys.account.captchaEnabled", "登录验证码"},
 	{"sys.account.registerUser", "开放注册"},
 	{"sys.login.blackIPList", "登录IP黑名单"},
+	{"sys.log.level", "日志级别"},
+	{"sys.log.format", "日志格式"},
 }
 
 // loadSiteSetting 从 sys_config 读取全部网站设置
@@ -60,6 +62,8 @@ func (s *SiteSettingHandler) loadSiteSetting() (apisystem.SiteSetting, error) {
 	out.CaptchaEnabled = vals["sys.account.captchaEnabled"]
 	out.RegisterUser = vals["sys.account.registerUser"]
 	out.BlackIPList = vals["sys.login.blackIPList"]
+	out.LogLevel = vals["sys.log.level"]
+	out.LogFormat = vals["sys.log.format"]
 	return out, nil
 }
 
@@ -149,6 +153,8 @@ func (s *SiteSettingHandler) UpdateSiteSetting(c *gin.Context) {
 		{"sys.account.captchaEnabled", "登录验证码", req.CaptchaEnabled},
 		{"sys.account.registerUser", "开放注册", req.RegisterUser},
 		{"sys.login.blackIPList", "登录IP黑名单", req.BlackIPList},
+		{"sys.log.level", "日志级别", req.LogLevel},
+		{"sys.log.format", "日志格式", req.LogFormat},
 	}
 	for _, p := range pairs {
 		if err := s.saveSetting(p.Key, p.Name, p.Value); err != nil {
@@ -156,6 +162,11 @@ func (s *SiteSettingHandler) UpdateSiteSetting(c *gin.Context) {
 			response.Error(c, err.Error())
 			return
 		}
+	}
+	// 日志级别变更后立即动态生效（无需重启服务）
+	if req.LogLevel != "" {
+		pkg.SetLogLevel(req.LogLevel)
+		pkg.Logger.Infof("日志级别已动态调整为: %s", req.LogLevel)
 	}
 	response.DataMsg(c, true, "保存成功")
 }

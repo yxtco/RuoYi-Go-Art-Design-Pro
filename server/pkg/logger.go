@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -15,6 +16,12 @@ var Logger *zap.SugaredLogger
 
 // OperationLogger 操作级 SugaredLogger（写入 operation.log）
 var OperationLogger *zap.SugaredLogger
+
+// systemAtomicLevel 系统日志的原子级别，支持运行时动态调整
+var systemAtomicLevel zap.AtomicLevel
+
+// mu 保护 Logger / OperationLogger 重建时的并发安全
+var mu sync.Mutex
 
 // LogConfig 日志配置
 type LogConfig struct {
@@ -32,6 +39,9 @@ type LogConfig struct {
 // - error.log：错误级日志（error/panic/fatal）
 // - operation.log：操作级日志
 func SetupLogger(logConfig LogConfig) {
+	mu.Lock()
+	defer mu.Unlock()
+
 	// 解析日志级别
 	level := parseLevel(logConfig.Level)
 
@@ -93,6 +103,9 @@ func SetupLogger(logConfig LogConfig) {
 		consoleEncoder = zapcore.NewConsoleEncoder(consoleEncoderConfig)
 	}
 
+	// 创建原子级别（支持运行时动态调整）
+	systemAtomicLevel = zap.NewAtomicLevelAt(level)
+
 	// --- 系统级日志 Core（system.log + 控制台）---
 	systemWriter := &lumberjack.Logger{
 		Filename:   filepath.Join(logDir, "system.log"),
@@ -101,10 +114,10 @@ func SetupLogger(logConfig LogConfig) {
 		MaxAge:     maxAge,
 		Compress:   logConfig.Compress,
 	}
-	// 控制台 Core（带彩色）
-	consoleCore := zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), level)
-	// 文件 Core（无彩色）
-	fileCore := zapcore.NewCore(fileEncoder, zapcore.AddSync(systemWriter), level)
+	// 控制台 Core（带彩色，使用原子级别）
+	consoleCore := zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), systemAtomicLevel)
+	// 文件 Core（无彩色，使用原子级别）
+	fileCore := zapcore.NewCore(fileEncoder, zapcore.AddSync(systemWriter), systemAtomicLevel)
 	// 合并控制台和文件 Core
 	systemCore := zapcore.NewTee(consoleCore, fileCore)
 
@@ -138,6 +151,16 @@ func SetupLogger(logConfig LogConfig) {
 	OperationLogger = operationZapLogger.Sugar()
 }
 
+// SetLogLevel 运行时动态调整系统日志级别
+// levelStr 支持：quiet（安静，仅 error）、standard（标准，info）、detailed（详细，debug），或直接传 zap 级别名
+func SetLogLevel(levelStr string) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	level := parseLevel(levelStr)
+	systemAtomicLevel.SetLevel(level)
+}
+
 // SyncLogger 刷新日志缓冲区（程序退出前调用）
 func SyncLogger() {
 	if Logger != nil {
@@ -149,8 +172,15 @@ func SyncLogger() {
 }
 
 // parseLevel 解析日志级别字符串为 zapcore.Level
+// 支持前端友好名称：quiet（安静）→ error、standard（标准）→ info、detailed（详细）→ debug
 func parseLevel(levelStr string) zapcore.Level {
 	switch levelStr {
+	case "quiet":
+		return zapcore.ErrorLevel
+	case "standard", "":
+		return zapcore.InfoLevel
+	case "detailed":
+		return zapcore.DebugLevel
 	case "debug":
 		return zapcore.DebugLevel
 	case "info":

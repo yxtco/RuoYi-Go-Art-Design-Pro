@@ -128,7 +128,9 @@ INSERT INTO `sys_config` (`id`,`config_name`,`config_key`,`config_value`,`config
 ('13','登录页标题','login.title','','N','admin','2026-10-03 11:36:14','',NULL,'网站设置-登录页左侧标题'),
 ('14','登录页副标题','login.subtitle','','N','admin','2026-10-03 11:36:14','',NULL,'网站设置-登录页左侧副标题'),
 ('15','登录页背景','login.background','','N','admin','2026-10-03 11:36:14','',NULL,'网站设置-登录页背景图地址'),
-('16','登录页版权','login.copyright','','N','admin','2026-10-03 11:36:14','',NULL,'网站设置-登录页版权文字');
+('16','登录页版权','login.copyright','','N','admin','2026-10-03 11:36:14','',NULL,'网站设置-登录页版权文字'),
+('17','日志级别','sys.log.level','standard','N','admin','2026-10-03 11:36:14','',NULL,'网站设置-日志级别：quiet(安静)/standard(标准)/detailed(详细)'),
+('18','日志格式','sys.log.format','json','N','admin','2026-10-03 11:36:14','',NULL,'网站设置-日志格式：json/console');
 
 DROP TABLE IF EXISTS `sys_dept`;
 CREATE TABLE `sys_dept` (

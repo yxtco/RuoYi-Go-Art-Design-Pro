@@ -16,6 +16,10 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 
 	_ "go-fin-server/docs" // swagger 自动生成的文档
+	// ====== 插件空白导入区 ======
+	// 新增插件只需在此添加一行空白导入，插件的 init() 会自动注册路由
+	// 示例：_ "go-fin-server/plugins/fin"
+	// ============================
 )
 
 // SetupRouter 设置路由
@@ -47,7 +51,7 @@ func SetupRouter(hub *ws.Hub) *gin.Engine {
 
 	// 需要认证的路由（JWT 中间件）
 	r.Use(middleware.JWTMiddleware(db.RedisConnections["master"], config.GlobalConfig.Jwt.Secret, config.GlobalConfig.Jwt.ExpirationTime))
-	r.POST("/logout", loginHandler.LoginOut)        // 退出方法（需要 JWT 认证以获取用户信息）
+	r.POST("/logout", loginHandler.LoginOut) // 退出方法（需要 JWT 认证以获取用户信息）
 	r.Use(middleware.OperationLogMiddleware(db.DBConnections["master"]))
 	r.GET("/getRouters", loginHandler.GetRouters) // 获取路由
 	r.POST("/register", loginHandler.Register)    // 注册方法
@@ -56,6 +60,7 @@ func SetupRouter(hub *ws.Hub) *gin.Engine {
 	setupMonitorRoutes(r)
 	setupToolRoutes(r)
 	SetupCommonRoutes(r) // 公共上传下载路由
+	setupPluginRoutes(r) // 自动加载所有插件路由（无需手动修改）
 
 	// 后端直接托管前端编译产物（SPA），置于所有 API 路由之后
 	ServeFrontend(r, config.GlobalConfig.Server.WebDistDir)

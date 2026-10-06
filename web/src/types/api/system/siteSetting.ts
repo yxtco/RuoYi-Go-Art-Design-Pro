@@ -26,6 +26,10 @@ export interface SiteSetting {
   registerUser?: string
   /** 登录IP黑名单（;分隔，对应 sys.login.blackIPList） */
   blackIPList?: string
+  /** 日志级别：quiet(安静) / standard(标准) / detailed(详细)，对应 sys.log.level */
+  logLevel?: string
+  /** 日志格式：json / console，对应 sys.log.format */
+  logFormat?: string
 }
 
 // 通用文件上传结果（/common/upload）

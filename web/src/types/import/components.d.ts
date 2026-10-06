@@ -78,6 +78,7 @@ declare module 'vue' {
     Day: typeof import('./../../components/Crontab/day.vue')['default']
     Detail: typeof import('./../../components/core/layouts/art-notification/detail.vue')['default']
     DictTag: typeof import('./../../components/core/ruoyi/dict-tag/index.vue')['default']
+    ElAlert: typeof import('element-plus/es')['ElAlert']
     ElAvatar: typeof import('element-plus/es')['ElAvatar']
     ElBadge: typeof import('element-plus/es')['ElBadge']
     ElButton: typeof import('element-plus/es')['ElButton']
