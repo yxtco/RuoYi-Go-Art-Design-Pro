@@ -44,23 +44,30 @@ func ServeFrontend(r *gin.Engine, distDir string) {
 				return
 			}
 			rel = filepath.Clean(filepath.FromSlash(strings.TrimPrefix(rel, "/")))
+			// 构建产物文件名含 content hash，可安全设置长缓存
+			c.Header("Cache-Control", "public, max-age=31536000, immutable")
 			serveStaticCompressed(c, staticDir, rel)
 		})
 	}
 
-	// favicon
+	// favicon（每次启动可能变化，不做强缓存）
 	if _, err := os.Stat(filepath.Join(distDir, "favicon.ico")); err == nil {
-		r.StaticFile("/favicon.ico", filepath.Join(distDir, "favicon.ico"))
+		r.GET("/favicon.ico", func(c *gin.Context) {
+			c.Header("Cache-Control", "public, max-age=86400")
+			c.File(filepath.Join(distDir, "favicon.ico"))
+		})
 	}
 
-	// 首页
+	// 首页（SPA 入口，不缓存以保证每次获取最新版本）
 	r.GET("/", func(c *gin.Context) {
+		c.Header("Cache-Control", "no-cache")
 		c.File(indexPath)
 	})
 
 	// history 路由回退：未匹配的 GET 请求返回 index.html（浏览器路由刷新/直达）
 	r.NoRoute(func(c *gin.Context) {
 		if c.Request.Method == http.MethodGet {
+			c.Header("Cache-Control", "no-cache")
 			c.File(indexPath)
 			return
 		}

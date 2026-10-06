@@ -19,6 +19,7 @@ server/uploads
 web/node_modules
 web/preview
 web/.vite
+web/dist
 
 # 日志
 **/logs

@@ -166,6 +166,7 @@ func (s *SiteSettingHandler) UpdateSiteSetting(c *gin.Context) {
 	// 日志级别变更后立即动态生效（无需重启服务）
 	if req.LogLevel != "" {
 		pkg.SetLogLevel(req.LogLevel)
+		pkg.SetOperationLogLevel(req.LogLevel) // 操作日志级别同步调整
 		pkg.Logger.Infof("日志级别已动态调整为: %s", req.LogLevel)
 	}
 	response.DataMsg(c, true, "保存成功")

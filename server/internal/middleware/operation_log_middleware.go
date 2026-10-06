@@ -7,16 +7,19 @@ import (
 	"go-fin-server/pkg"
 	"go-fin-server/pkg/utils"
 	"go-fin-server/pkg/utils/addressutils"
+	"go-fin-server/pkg/utils/httputils"
 	"io"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
-// CustomWriter 自定义的 ResponseWriter
+// maxRequestBodySize 请求体最大读取大小（1MB），防止恶意大请求体占用内存
+const maxRequestBodySize = 1 << 20
+
+// CustomWriter 自定义的 ResponseWriter，用于捕获响应体
 type CustomWriter struct {
 	gin.ResponseWriter
 	Body []byte
@@ -27,127 +30,165 @@ func (w *CustomWriter) Write(data []byte) (int, error) {
 	return w.ResponseWriter.Write(data)
 }
 
-func ReadRequestBody(body io.Reader) ([]byte, error) {
-	// 读取 body 数据
-	bodyData, err := io.ReadAll(body)
-	if err != nil {
-		return nil, err
-	}
-
-	// 重新放回 body 数据
-	return bodyData, nil
-}
-
-var dbMutex sync.Mutex
-
 // OperationLogMiddleware 记录用户操作日志
+// - quiet（安静）：不记录任何操作日志
+// - standard（标准）：仅记录 POST/PUT/DELETE（写操作）
+// - detailed（详细）：记录所有请求（含 GET）
 func OperationLogMiddleware(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// 记录请求开始时间
 		startTime := time.Now()
-		var requestBody string
-		contentType := c.Request.Header.Get("Content-Type")
-		//  排除记录上传文件
-		if strings.Contains(contentType, "multipart/form-data") {
-			requestBody = ""
-		} else {
-			// 读取请求 body 数据
-			requestBodyByte, _ := ReadRequestBody(c.Request.Body)
-			requestBody = string(requestBodyByte)
-			// 重新设置 body 数据
-			c.Request.Body = io.NopCloser(bytes.NewBuffer(requestBodyByte))
+		requestMethod := c.Request.Method
+
+		// 根据日志级别判断是否需要记录当前请求
+		if !pkg.ShouldLogOperation(requestMethod) {
+			c.Next()
+			return
 		}
 
-		// 使用自定义的 ResponseWriter
-		c.Writer = &CustomWriter{ResponseWriter: c.Writer}
-		var loginUser = new(model.LoginUser)
-		claims, exists := c.Get("loginUser")
-		if exists {
-			loginUser = claims.(*model.LoginUser)
-		}
+		// 读取请求 body（排除文件上传）
+		requestBody := readRequestBody(c)
+
+		// 使用自定义 ResponseWriter 捕获响应体
+		cw := &CustomWriter{ResponseWriter: c.Writer}
+		c.Writer = cw
+
+		// 获取登录用户信息
+		loginUser := getLoginUser(c)
+
 		// 处理请求
 		c.Next()
-		// 请求处理完成后获取响应体和状态码
-		cw := c.Writer.(*CustomWriter)
 
-		// 记录请求结束时间
-		//endTime := time.Now()
-		// 计算请求处理时间
-		duration := time.Since(startTime).Milliseconds()
-		// 获取请求和响应信息
-		ip := c.ClientIP()
-		requestMethod := c.Request.Method
-		requestURL := c.Request.URL.String()
-		//requestBody := c.Request.Form.Encode()
-		//requestUa   := c.Request.UserAgent()
-		responseStatus := c.Writer.Status()
+		// 获取响应信息
+		responseStatus := cw.Status()
 		responseBody := string(cw.Body)
+
+		// 跳过无效响应（404 或空响应体）
 		if responseStatus == 404 || responseBody == "" {
 			return
 		}
-		// 如果响应的body code 不为 200 则记录error 信息
-		var errMsg string
-		var status = 0 // 0 正常 1异常
-		// 检查响应的 Content-Type
-		responseContentType := c.Writer.Header().Get("Content-Type")
-		// 不记录导出excel的响应
-		if responseContentType == "application/octet-stream" {
-			responseBody = ""
-		} else {
-			responseBodyMap := utils.StringToMap(responseBody)
-			if v, ok := responseBodyMap["code"]; ok {
-				if v.(float64) != 200 {
-					if msg, ok2 := responseBodyMap["msg"]; ok2 {
-						errMsg = msg.(string)
-					}
-					status = 1
-				}
-			}
-		}
 
-		//business_type 业务类型（0其它 1新增 2修改 3删除）
-		var businessType int
-		switch c.Request.Method {
-		case "GET":
-			businessType = 0
-		case "POST":
-			businessType = 1
-		case "PUT":
-			businessType = 2
-		case "DELETE":
-			businessType = 3
-		default:
-			businessType = 0
-		}
-		var operTitle = "操作日志"
-		// 模块标题
+		// 解析响应状态和错误信息
+		status, errMsg := parseResponse(c.Writer.Header().Get("Content-Type"), responseBody)
+
+		// 计算业务类型
+		businessType := parseBusinessType(requestMethod)
+
+		// 获取模块标题
+		operTitle := "操作日志"
 		if val, exists := c.Get("operTitle"); exists {
 			operTitle = val.(string)
 		}
+
+		// 获取操作信息
+		ip := httputils.GetClientIP(c)
+		requestURL := c.Request.URL.String()
+		duration := time.Since(startTime).Milliseconds()
 		operLocation := addressutils.GetRealAddressByIP(ip, config.GlobalConfig.IsAddressEnabled)
-		//操作类别（0其它 1后台用户 2手机端用户）
-		// 使用协程插入操作日志到数据库和本地文件
-		go func() {
-			dbMutex.Lock()
-			defer dbMutex.Unlock()
-			insertLogQuery := "INSERT INTO sys_oper_log (title,business_type,method, request_method,operator_type,oper_name,dept_name,oper_url,oper_ip,oper_location,oper_param,json_result,status,error_msg,oper_time,cost_time) VALUES (?, ?, ?, ?, ?, ?, ?,?,?,?,?, ?, ?, ?, ?,?)"
-			if err := db.Exec(insertLogQuery, operTitle, businessType, requestURL, requestMethod, 1, loginUser.UserName, loginUser.DeptName, requestURL, ip, operLocation, requestBody, "", status, errMsg, utils.GetCurrentDateTime(), duration).Error; err != nil {
-				pkg.Logger.Errorf("failed to insert log into database: %v", err)
-			}
-			// 写入操作日志到本地 operation.log 文件
-			pkg.OperationLogger.Infow("操作日志",
-				"title", operTitle,
-				"method", requestURL,
-				"requestMethod", requestMethod,
-				"operator", loginUser.UserName,
-				"deptName", loginUser.DeptName,
-				"operIp", ip,
-				"operLocation", operLocation,
-				"requestBody", requestBody,
-				"status", status,
-				"errMsg", errMsg,
-				"costTime", duration,
-			)
-		}()
+
+		// 异步写入操作日志（数据库 + 本地文件）
+		go writeOperationLog(db, operTitle, businessType, requestURL, requestMethod,
+			loginUser, ip, operLocation, requestBody, status, errMsg, duration)
 	}
+}
+
+// readRequestBody 安全读取请求体，排除文件上传类型
+func readRequestBody(c *gin.Context) string {
+	contentType := c.Request.Header.Get("Content-Type")
+	if strings.Contains(contentType, "multipart/form-data") {
+		return ""
+	}
+
+	bodyData, err := io.ReadAll(io.LimitReader(c.Request.Body, maxRequestBodySize))
+	if err != nil {
+		return ""
+	}
+	// 将 body 数据放回，供后续 handler 使用
+	c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyData))
+	return string(bodyData)
+}
+
+// getLoginUser 从 Gin Context 获取登录用户信息
+func getLoginUser(c *gin.Context) *model.LoginUser {
+	if claims, exists := c.Get("loginUser"); exists {
+		return claims.(*model.LoginUser)
+	}
+	return &model.LoginUser{}
+}
+
+// parseResponse 解析响应内容，返回操作状态和错误信息
+// status: 0=正常, 1=异常
+func parseResponse(contentType, responseBody string) (int, string) {
+	// 不记录导出 Excel 的响应体
+	if contentType == "application/octet-stream" {
+		return 0, ""
+	}
+
+	responseMap := utils.StringToMap(responseBody)
+	if code, ok := responseMap["code"]; ok {
+		if codeVal, isFloat := code.(float64); isFloat && codeVal != 200 {
+			if msg, hasMsg := responseMap["msg"]; hasMsg {
+				if msgStr, isStr := msg.(string); isStr {
+					return 1, msgStr
+				}
+			}
+			return 1, ""
+		}
+	}
+	return 0, ""
+}
+
+// parseBusinessType 根据 HTTP 方法解析业务类型
+// 0=其它 1=新增 2=修改 3=删除
+func parseBusinessType(method string) int {
+	switch method {
+	case "POST":
+		return 1
+	case "PUT":
+		return 2
+	case "DELETE":
+		return 3
+	default:
+		return 0
+	}
+}
+
+// writeOperationLog 异步写入操作日志到数据库和本地文件
+func writeOperationLog(db *gorm.DB, title string, businessType int, url, method string,
+	loginUser *model.LoginUser, ip, location, requestBody string, status int, errMsg string, duration int64) {
+
+	// 二次校验日志模式，防止异步执行时模式已变更为 quiet
+	if !pkg.ShouldLogOperation(method) {
+		return
+	}
+
+	// 写入数据库（GORM 内部线程安全，无需外部 mutex）
+	insertSQL := `INSERT INTO sys_oper_log 
+		(title, business_type, method, request_method, operator_type, oper_name, dept_name, 
+		 oper_url, oper_ip, oper_location, oper_param, json_result, status, error_msg, oper_time, cost_time) 
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+
+	if err := db.Exec(insertSQL,
+		title, businessType, url, method, 1,
+		loginUser.UserName, loginUser.DeptName,
+		url, ip, location,
+		requestBody, "", status, errMsg,
+		utils.GetCurrentDateTime(), duration,
+	).Error; err != nil {
+		pkg.Logger.Errorf("写入操作日志到数据库失败: %v", err)
+	}
+
+	// 写入本地 operation.log 文件
+	pkg.OperationLogger.Infow("操作日志",
+		"title", title,
+		"method", url,
+		"requestMethod", method,
+		"operator", loginUser.UserName,
+		"deptName", loginUser.DeptName,
+		"operIp", ip,
+		"operLocation", location,
+		"requestBody", requestBody,
+		"status", status,
+		"errMsg", errMsg,
+		"costTime", duration,
+	)
 }

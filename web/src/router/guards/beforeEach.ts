@@ -228,7 +228,10 @@ function handleLoginStatus(
   }
 
   // 未登录且访问需要权限的页面，跳转到登录页并携带 redirect 参数
-  userStore.logOut()
+  // 仅当有令牌时才调用 logOut()（清理服务端会话），无令牌时直接跳转即可
+  if (userStore.accessToken) {
+    userStore.logOut()
+  }
   next({
     name: 'Login',
     query: { redirect: to.fullPath }
@@ -306,6 +309,9 @@ async function handleDynamicRoutes(
 
     // 7. 验证工作标签页
     useWorktabStore().validateWorktabs(router)
+
+    // 7.5 利用浏览器空闲时间预热已注册路由的 chunk，首次点击时立即显示
+    preloadRouteChunks(router)
 
     // 8. 静态路由不依赖菜单权限，初始化后直接恢复目标地址。
     if (isStaticRoute(to.path)) {
@@ -465,4 +471,33 @@ function handleRootPathRedirect(
  */
 function isUnauthorizedError(error: unknown): boolean {
   return isHttpError(error) && error.code === ApiStatus.unauthorized
+}
+
+/**
+ * 利用浏览器空闲时间预热已注册路由的懒加载 chunk
+ *
+ * 在动态路由注册完成后调用，遍历 router.getRoutes() 中所有带懒加载 component 的路由，
+ * 在 requestIdleCallback 回调中逐个触发 import()，使 chunk 提前下载到内存。
+ * 用户首次点击菜单时组件已在内存，无需等待网络请求。
+ * 不阻塞登录跳转，因为预热逻辑在导航完成后的空闲时段执行。
+ */
+function preloadRouteChunks(routerInstance: Router): void {
+  const scheduleIdle =
+    typeof window.requestIdleCallback === 'function'
+      ? window.requestIdleCallback
+      : (cb: IdleRequestCallback) => setTimeout(() => cb({ didTimeout: false, timeRemaining: () => 50 } as IdleDeadline), 200)
+
+  scheduleIdle(() => {
+    const routes = routerInstance.getRoutes()
+    for (const route of routes) {
+      // 只预热懒加载的 component（形如 () => import('...')）
+      if (typeof route.components?.default === 'function') {
+        try {
+          ;(route.components.default as () => Promise<any>)()
+        } catch {
+          // 单个 chunk 加载失败不应影响其他路由的预热
+        }
+      }
+    }
+  })
 }

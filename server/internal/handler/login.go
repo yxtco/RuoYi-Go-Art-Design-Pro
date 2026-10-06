@@ -16,6 +16,7 @@ import (
 	"go-fin-server/pkg/rsatool"
 	"go-fin-server/pkg/types"
 	"go-fin-server/pkg/utils"
+	"go-fin-server/pkg/utils/httputils"
 	"strings"
 	"time"
 
@@ -154,7 +155,7 @@ func (s *LoginHandler) Login(c *gin.Context) {
 
 	loginService.InsertLoginInfo(req.UserName, constant.LOGIN_SUCCESS, "user.login.success")
 	err = s.Services.SysUserService.UpdateUserProfile(userObj.Id, map[string]interface{}{
-		"login_ip":   c.ClientIP(),
+		"login_ip":   httputils.GetClientIP(c),
 		"login_date": types.LocalTime{Time: time.Now()},
 	})
 	if err != nil {

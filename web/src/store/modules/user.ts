@@ -41,6 +41,7 @@ import { ref, computed } from 'vue'
 import { LanguageEnum } from '@/enums/appEnum'
 import { router } from '@/router'
 import { resetRouterState } from '@/router/guards/beforeEach'
+import { RoutesAlias } from '@/router/routesAlias'
 import { AppRouteRecord } from '@/types/router'
 import { setPageTitle } from '@utils/router'
 import { StorageConfig } from '@utils/storage/storage-config'
@@ -203,10 +204,13 @@ export const useUserStore = defineStore(
       // 停止会话心跳检查
       stopSessionCheck()
       // 调用后端退出 API（清除 token 缓存）
-      try {
-        await fetchLogout()
-      } catch {
-        // 即使后端退出失败，也继续清理前端状态
+      // 无 token 时无需调用后端退出接口，避免触发 401 导致重复退出和错误提示
+      if (accessToken.value) {
+        try {
+          await fetchLogout()
+        } catch {
+          // 即使后端退出失败，也继续清理前端状态
+        }
       }
 
       // 保存当前用户 ID，用于下次登录时判断是否为同一用户
@@ -238,13 +242,14 @@ export const useUserStore = defineStore(
       // 重置路由状态
       resetRouterState(500)
       // 跳转到登录页，携带当前路由作为 redirect 参数
+      // 已在登录页时不再重复跳转，避免 redirect 嵌套导致 URL 异常
       const currentRoute = router.currentRoute.value
-      const redirect =
-        currentRoute.path !== '/login' ? currentRoute.fullPath : undefined
-      router.push({
-        name: 'Login',
-        query: redirect ? { redirect } : undefined
-      })
+      if (currentRoute.path !== RoutesAlias.Login) {
+        router.push({
+          name: 'Login',
+          query: { redirect: currentRoute.fullPath }
+        })
+      }
     }
 
     /**

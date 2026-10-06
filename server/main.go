@@ -96,6 +96,12 @@ func main() {
 	} else {
 		pkg.Logger.Info("字典缓存加载完成")
 	}
+	// 从数据库加载日志级别（DB 为准，yaml 仅作为启动兜底）
+	configService := system.SysConfigService{}
+	if dbLogLevel, err := configService.SelectConfigByKey("sys.log.level"); err == nil && dbLogLevel != "" {
+		pkg.SetOperationLogLevel(dbLogLevel)
+		pkg.Logger.Infof("日志级别已从数据库加载: %s", dbLogLevel)
+	}
 	// 启动定时任务调度器
 	taskScheduler := jobscheduler.NewTaskScheduler()
 	taskScheduler.Start()

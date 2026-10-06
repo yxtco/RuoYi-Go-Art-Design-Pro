@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -19,6 +20,16 @@ var OperationLogger *zap.SugaredLogger
 
 // systemAtomicLevel 系统日志的原子级别，支持运行时动态调整
 var systemAtomicLevel zap.AtomicLevel
+
+// operationAtomicLevel 操作日志的原子级别，支持运行时动态调整
+var operationAtomicLevel zap.AtomicLevel
+
+// errorAtomicLevel 错误日志的原子级别，支持安静模式下静默
+var errorAtomicLevel zap.AtomicLevel
+
+// operationMode 操作日志记录模式（atomic 存储 string）
+// quiet=不记录 standard=仅记录写操作 detailed=记录所有请求
+var operationMode atomic.Value
 
 // mu 保护 Logger / OperationLogger 重建时的并发安全
 var mu sync.Mutex
@@ -103,8 +114,14 @@ func SetupLogger(logConfig LogConfig) {
 		consoleEncoder = zapcore.NewConsoleEncoder(consoleEncoderConfig)
 	}
 
+	// 安静模式：系统日志和错误日志也一并静默（仅保留 Fatal 级别用于崩溃）
+	systemLevel := level
+	if logConfig.Level == "quiet" {
+		systemLevel = zapcore.FatalLevel
+	}
+
 	// 创建原子级别（支持运行时动态调整）
-	systemAtomicLevel = zap.NewAtomicLevelAt(level)
+	systemAtomicLevel = zap.NewAtomicLevelAt(systemLevel)
 
 	// --- 系统级日志 Core（system.log + 控制台）---
 	systemWriter := &lumberjack.Logger{
@@ -122,6 +139,12 @@ func SetupLogger(logConfig LogConfig) {
 	systemCore := zapcore.NewTee(consoleCore, fileCore)
 
 	// --- 错误级日志 Core（error.log）---
+	// 安静模式下错误日志也静默，否则与系统日志保持一致
+	errorLevel := zapcore.ErrorLevel
+	if logConfig.Level == "quiet" {
+		errorLevel = zapcore.FatalLevel
+	}
+	errorAtomicLevel = zap.NewAtomicLevelAt(errorLevel)
 	errorWriter := &lumberjack.Logger{
 		Filename:   filepath.Join(logDir, "error.log"),
 		MaxSize:    maxSize,
@@ -129,7 +152,7 @@ func SetupLogger(logConfig LogConfig) {
 		MaxAge:     maxAge,
 		Compress:   logConfig.Compress,
 	}
-	errorCore := zapcore.NewCore(fileEncoder, zapcore.AddSync(errorWriter), zapcore.ErrorLevel)
+	errorCore := zapcore.NewCore(fileEncoder, zapcore.AddSync(errorWriter), errorAtomicLevel)
 
 	// 合并系统日志和错误日志 Core
 	combinedCore := zapcore.NewTee(systemCore, errorCore)
@@ -138,7 +161,12 @@ func SetupLogger(logConfig LogConfig) {
 	zapLogger := zap.New(combinedCore, zap.AddCaller(), zap.AddCallerSkip(0))
 	Logger = zapLogger.Sugar()
 
+	// 初始化操作日志模式
+	operationMode.Store(logConfig.Level)
+
 	// --- 操作级日志（operation.log）---
+	// 操作日志使用独立的原子级别，支持动态调整
+	operationAtomicLevel = zap.NewAtomicLevelAt(level)
 	operationWriter := &lumberjack.Logger{
 		Filename:   filepath.Join(logDir, "operation.log"),
 		MaxSize:    maxSize,
@@ -146,19 +174,58 @@ func SetupLogger(logConfig LogConfig) {
 		MaxAge:     maxAge,
 		Compress:   logConfig.Compress,
 	}
-	operationCore := zapcore.NewCore(fileEncoder, zapcore.AddSync(operationWriter), zapcore.InfoLevel)
+	operationCore := zapcore.NewCore(fileEncoder, zapcore.AddSync(operationWriter), operationAtomicLevel)
 	operationZapLogger := zap.New(operationCore)
 	OperationLogger = operationZapLogger.Sugar()
 }
 
 // SetLogLevel 运行时动态调整系统日志级别
-// levelStr 支持：quiet（安静，仅 error）、standard（标准，info）、detailed（详细，debug），或直接传 zap 级别名
+// levelStr 支持：quiet（安静，全静默）、standard（标准，info）、detailed（详细，debug），或直接传 zap 级别名
 func SetLogLevel(levelStr string) {
 	mu.Lock()
 	defer mu.Unlock()
 
 	level := parseLevel(levelStr)
 	systemAtomicLevel.SetLevel(level)
+}
+
+// SetOperationLogLevel 运行时动态调整操作日志级别（联动系统日志和错误日志）
+// quiet=全部静默 standard=仅记录写操作 detailed=全部记录
+func SetOperationLogLevel(levelStr string) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	level := parseLevel(levelStr)
+	operationAtomicLevel.SetLevel(level)
+	operationMode.Store(levelStr)
+
+	// 联动调整系统日志和错误日志级别
+	if levelStr == "quiet" {
+		// 安静模式：系统日志和错误日志全部静默（仅保留 Fatal）
+		systemAtomicLevel.SetLevel(zapcore.FatalLevel)
+		errorAtomicLevel.SetLevel(zapcore.FatalLevel)
+	} else {
+		// 非安静模式：恢复系统日志和错误日志到默认级别
+		systemAtomicLevel.SetLevel(level)
+		errorAtomicLevel.SetLevel(zapcore.ErrorLevel)
+	}
+}
+
+// ShouldLogOperation 判断当前日志级别下是否应记录指定 HTTP 方法的操作日志
+// quiet → 不记录任何操作日志
+// standard → 仅记录 POST/PUT/DELETE（写操作）
+// detailed → 记录所有请求（含 GET）
+func ShouldLogOperation(method string) bool {
+	mode, _ := operationMode.Load().(string)
+	switch mode {
+	case "quiet":
+		return false
+	case "detailed", "debug":
+		return true
+	default: // standard / info / 空值
+		// 标准模式：仅记录写操作
+		return method != "GET"
+	}
 }
 
 // SyncLogger 刷新日志缓冲区（程序退出前调用）

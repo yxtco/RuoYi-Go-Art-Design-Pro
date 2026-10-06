@@ -78,7 +78,41 @@ func TestServeFrontend_CompressionNegotiation(t *testing.T) {
 			if c.wantCE != "" && !strings.Contains(w.Header().Get("Vary"), "Accept-Encoding") {
 				t.Errorf("压缩响应缺少 Vary: Accept-Encoding")
 			}
+			// assets-web 下的构建产物应带长缓存头
+			cc := w.Header().Get("Cache-Control")
+			if !strings.Contains(cc, "max-age=31536000") {
+				t.Errorf("Cache-Control = %q, 期望包含 max-age=31536000", cc)
+			}
 		})
+	}
+}
+
+func TestServeFrontend_CacheHeaders(t *testing.T) {
+	dir := setupTestDist(t)
+	r := newFrontendEngine(dir)
+
+	// 首页应带 no-cache
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if cc := w.Header().Get("Cache-Control"); cc != "no-cache" {
+		t.Errorf("首页 Cache-Control = %q, 期望 no-cache", cc)
+	}
+
+	// SPA 回退应带 no-cache
+	req = httptest.NewRequest(http.MethodGet, "/some/route", nil)
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if cc := w.Header().Get("Cache-Control"); cc != "no-cache" {
+		t.Errorf("SPA 回退 Cache-Control = %q, 期望 no-cache", cc)
+	}
+
+	// assets-web 资源应带长缓存
+	req = httptest.NewRequest(http.MethodGet, "/assets-web/app.js", nil)
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if cc := w.Header().Get("Cache-Control"); !strings.Contains(cc, "immutable") {
+		t.Errorf("静态资源 Cache-Control = %q, 期望包含 immutable", cc)
 	}
 }
 

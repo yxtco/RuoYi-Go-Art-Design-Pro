@@ -5,11 +5,38 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"golang.org/x/net/html/charset"
 	"golang.org/x/text/transform"
 )
+
+// GetClientIP 从 Gin Context 中获取客户端真实 IP
+// 优先从 X-Real-IP 头获取（单值，最可靠）
+// 其次从 X-Forwarded-For 头获取第一个 IP（客户端原始 IP）
+// 最后回退到 c.ClientIP()（直接连接 IP）
+// 适用场景：登录日志、操作日志等需要记录真实客户端 IP 的地方
+func GetClientIP(c *gin.Context) string {
+	// 1. 优先 X-Real-IP（Nginx/代理服务器通常设置此头）
+	if realIP := c.GetHeader("X-Real-IP"); realIP != "" {
+		return realIP
+	}
+
+	// 2. 其次 X-Forwarded-For（取第一个 IP，即客户端原始 IP）
+	// X-Forwarded-For 格式：client, proxy1, proxy2
+	if xff := c.GetHeader("X-Forwarded-For"); xff != "" {
+		// 取第一个 IP（去除空格）
+		if idx := strings.Index(xff, ","); idx != -1 {
+			return strings.TrimSpace(xff[:idx])
+		}
+		return strings.TrimSpace(xff)
+	}
+
+	// 3. 回退到 Gin 的 ClientIP()（读取 RemoteAddr）
+	return c.ClientIP()
+}
 
 // HttpClient 定义了一个 HTTP 客户端结构体，包含一个 http.Client 实例。
 type HttpClient struct {

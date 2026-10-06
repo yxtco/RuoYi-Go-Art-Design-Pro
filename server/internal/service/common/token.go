@@ -10,6 +10,7 @@ import (
 	"go-fin-server/pkg"
 	"go-fin-server/pkg/redistool"
 	"go-fin-server/pkg/utils/addressutils"
+	"go-fin-server/pkg/utils/httputils"
 	"strings"
 	"time"
 
@@ -191,8 +192,9 @@ func (c TokenService) RefreshToken(loginUser *model.LoginUser, now, expireTime i
 func (c TokenService) SetUserAgent(loginUser *model.LoginUser) {
 	userAgent := useragent.New(c.Request.GetHeader("User-Agent"))
 	name, _ := userAgent.Browser()
-	loginUser.Ipaddr = c.Request.ClientIP()
-	loginUser.LoginLocation = addressutils.GetRealAddressByIP(c.Request.ClientIP(), config.GlobalConfig.IsAddressEnabled)
+	ip := httputils.GetClientIP(c.Request)
+	loginUser.Ipaddr = ip
+	loginUser.LoginLocation = addressutils.GetRealAddressByIP(ip, config.GlobalConfig.IsAddressEnabled)
 	loginUser.Browser = name
 	loginUser.Os = userAgent.OS()
 }

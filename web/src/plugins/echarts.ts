@@ -8,30 +8,21 @@
  * @author Art Design Pro Team
  */
 
-// 导入图表类型
+// 导入图表类型（只保留项目中实际使用的图表）
 import {
   BarChart,
   LineChart,
   PieChart,
   GaugeChart,
   ScatterChart,
-  RadarChart,
-  MapChart,
-  CandlestickChart
+  RadarChart
 } from 'echarts/charts'
-// 导入组件
+// 导入组件（只保留项目中实际使用的组件）
 import {
   TitleComponent,
   TooltipComponent,
   GridComponent,
-  LegendComponent,
-  DataZoomComponent,
-  MarkPointComponent,
-  MarkLineComponent,
-  ToolboxComponent,
-  BrushComponent,
-  GeoComponent,
-  VisualMapComponent
+  LegendComponent
 } from 'echarts/components'
 // ECharts 按需导入配置
 import * as echarts from 'echarts/core'
@@ -47,21 +38,12 @@ echarts.use([
   GaugeChart,
   ScatterChart,
   RadarChart,
-  MapChart,
-  CandlestickChart,
 
   // 组件
   TitleComponent,
   TooltipComponent,
   GridComponent,
   LegendComponent,
-  DataZoomComponent,
-  MarkPointComponent,
-  MarkLineComponent,
-  ToolboxComponent,
-  BrushComponent,
-  GeoComponent,
-  VisualMapComponent,
 
   // 渲染器
   CanvasRenderer

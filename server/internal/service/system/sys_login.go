@@ -7,6 +7,7 @@ import (
 	"go-fin-server/pkg"
 	"go-fin-server/pkg/types"
 	"go-fin-server/pkg/utils/addressutils"
+	"go-fin-server/pkg/utils/httputils"
 	"go-fin-server/pkg/utils/stringutils"
 	"time"
 
@@ -27,7 +28,7 @@ func (c SysLoginService) New(request *gin.Context) *SysLoginService {
 // InsertLoginInfo 新增登录日志
 func (c SysLoginService) InsertLoginInfo(userName, status, msg string) {
 	userAgent := useragent.New(c.Request.GetHeader("User-Agent"))
-	ip := c.Request.ClientIP()
+	ip := httputils.GetClientIP(c.Request)
 	os := userAgent.OS()
 	browser, _ := userAgent.Browser()
 	log := model.SysLoginInfo{

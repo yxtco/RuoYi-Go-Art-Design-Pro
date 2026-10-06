@@ -22,7 +22,7 @@ database_list:
 
 # 日志配置
 log:
-  level: info            # 日志级别：debug, info, warn, error
+  level: standard        # 日志级别：quiet(不记录操作日志) / standard(仅记录写操作) / detailed(记录所有请求)
   format: json           # 日志格式：text, json
   dir: /app/logs         # 日志文件存储目录
   max_size: 20           # 单个日志文件最大大小(MB)

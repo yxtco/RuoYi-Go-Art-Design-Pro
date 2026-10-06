@@ -39,7 +39,25 @@ export default ({ mode }: { mode: string }) => {
           changeOrigin: true,
           // 支持 WebSocket 升级转发（聊天 /ws/chat 走代理，避免跨域与主机/端口不一致）
           ws: true,
-          rewrite: (p) => p.replace(/^\/dev-api/, '')
+          rewrite: (p) => p.replace(/^\/dev-api/, ''),
+          // 转发真实客户端 IP 到后端（登录日志/操作日志依赖 X-Real-IP / X-Forwarded-For）
+          configure: (proxy) => {
+            proxy.on('proxyReq', (proxyReq, req) => {
+              const clientIP =
+                req.headers['x-real-ip'] ||
+                req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+                req.socket.remoteAddress
+              if (clientIP) {
+                proxyReq.setHeader('X-Real-IP', clientIP)
+                proxyReq.setHeader(
+                  'X-Forwarded-For',
+                  req.headers['x-forwarded-for']
+                    ? `${req.headers['x-forwarded-for']}, ${clientIP}`
+                    : clientIP
+                )
+              }
+            })
+          }
         },
         // swaggo swagger doc.json 代理
         '/swagger/doc.json': {
